@@ -25,7 +25,7 @@ def read_label_data(csv_file):
 
             # Build nested structure
             label_info_dict[doc_name][(dos, code)] = code_status
-    print(f"Label for {len(label_info_dict)} of documents extracted!")
+    # print(f"Label for {len(label_info_dict)} of documents extracted!")
     return label_info_dict
 
 
@@ -57,14 +57,13 @@ def read_json_file(file_path: str, label_info_dict: defaultdict):
                 treatment_evidence_list.append(internal_code_trtmnt_text)
 
             label = label_info_dict[(dos, code)]
+            if not label:
+                # print(f"Label not found for DOS: {dos}, Code: {code} and File path: {file_path}")
+                continue
             if label == "SUGGESTED_ACCEPTED":
                 label = 1
             else:
                 label = 0
-            if not label:
-                # print(f"Label not found for DOS: {dos}, Code: {code} and File path: {file_path}")
-                continue
-
             datapoint.append((code, justification_list, monitoring_evidence_list, evaluation_evidence_list,
                               assessment_evidence_list, treatment_evidence_list, label))
 
