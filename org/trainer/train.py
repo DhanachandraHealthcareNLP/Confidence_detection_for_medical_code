@@ -138,7 +138,7 @@ def load_datapoints_stub():
     ]
 
 
-def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=100):
+def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=-1):
     datapoints = []
     with open(data_file_path) as reader:
         next(reader)
