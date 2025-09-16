@@ -10,7 +10,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 from org.trainer.dataset import collate_fn
 
-use_wandb = False
+use_wandb = True
 if use_wandb:
     import wandb
 
@@ -73,7 +73,7 @@ def eval_epoch(model, loader, criterion, device):
 def main(tr_datapoints, val_datapoints, collate_fn):
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if use_wandb:
-        wandb.login(key="e0b3f587c775832e1793ec717ee83b24a340d7be")
+        wandb.login(key="2c9a7fa8db8b8280ce920f0a9c576302ddc36bf9")
         wandb.init(project=CONFIG["project"], config=CONFIG)
     print("Loading the embedding model!")
     embed_model = SentenceTransformer(CONFIG["embed_model_name"], device=DEVICE)
@@ -138,7 +138,7 @@ def load_datapoints_stub():
     ]
 
 
-def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=-1):
+def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=100):
     datapoints = []
     with open(data_file_path) as reader:
         next(reader)
