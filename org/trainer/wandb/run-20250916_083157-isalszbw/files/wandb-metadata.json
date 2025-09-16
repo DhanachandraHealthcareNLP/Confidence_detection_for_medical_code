@@ -1,0 +1,24 @@
+{
+  "os":  "Linux-6.8.0-79-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.11.9",
+  "startedAt":  "2025-09-16T03:01:57.913462Z",
+  "program":  "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/train.py",
+  "codePath":  "train.py",
+  "codePathLocal":  "train.py",
+  "email":  "dhana1991.n@gmail.com",
+  "root":  "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer",
+  "host":  "Laptop-299-Raapid",
+  "executable":  "/home/dhanachandra/anaconda3/envs/cotivity_ner/bin/python",
+  "cpu_count":  4,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "486777282560",
+      "used":  "306544152576"
+    }
+  },
+  "memory":  {
+    "total":  "16501559296"
+  },
+  "writerId":  "tcga0wqy1m29dc20u27scua7fttirykv"
+}

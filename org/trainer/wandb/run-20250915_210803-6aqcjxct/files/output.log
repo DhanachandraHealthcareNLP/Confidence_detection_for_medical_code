@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/train.py", line 119, in <module>
+    main(datapoints)
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/train.py", line 67, in main
+    model = ICDConfidenceModel(embed_model, CONFIG["hidden_dim"], CONFIG["dropout"]).to(DEVICE)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/model/icd10cm_confidence_predictor.py", line 14, in __init__
+    nn.Linear(input_dim, hidden_dim),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/vir_env/lib/python3.11/site-packages/torch/nn/modules/linear.py", line 106, in __init__
+    torch.empty((out_features, in_features), **factory_kwargs)
+TypeError: empty() received an invalid combination of arguments - got (tuple, dtype=NoneType, device=NoneType), but expected one of:
+ * (tuple of ints size, *, tuple of names names, torch.memory_format memory_format = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)
+ * (tuple of ints size, *, torch.memory_format memory_format = None, Tensor out = None, torch.dtype dtype = None, torch.layout layout = None, torch.device device = None, bool pin_memory = False, bool requires_grad = False)

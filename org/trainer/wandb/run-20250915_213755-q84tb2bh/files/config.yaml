@@ -1,0 +1,70 @@
+_wandb:
+    value:
+        cli_version: 0.21.4
+        e:
+            aopavjgcwm7k5bxb0pbsptilpgd6tdse:
+                codePath: train.py
+                codePathLocal: train.py
+                cpu_count: 4
+                cpu_count_logical: 8
+                disk:
+                    /:
+                        total: "486777282560"
+                        used: "306626007040"
+                email: dhana1991.n@gmail.com
+                executable: /media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/vir_env/bin/python
+                host: Laptop-299-Raapid
+                memory:
+                    total: "16501551104"
+                os: Linux-6.8.0-79-generic-x86_64-with-glibc2.35
+                program: /media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/train.py
+                python: CPython 3.11.7
+                root: /media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer
+                startedAt: "2025-09-15T16:07:55.518857Z"
+                writerId: aopavjgcwm7k5bxb0pbsptilpgd6tdse
+        m: []
+        python_version: 3.11.7
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 53
+                - 75
+            "2":
+                - 1
+                - 5
+                - 11
+                - 49
+                - 53
+                - 75
+            "3":
+                - 16
+            "4": 3.11.7
+            "5": 0.21.4
+            "6": 4.56.1
+            "12": 0.21.4
+            "13": linux-x86_64
+batch_size:
+    value: 8
+dropout:
+    value: 0.2
+embed_model_name:
+    value: sentence-transformers/all-mpnet-base-v2
+epochs:
+    value: 5
+hidden_dim:
+    value: 512
+lr:
+    value: 0.0002
+project:
+    value: icd10-confidence
+save_path:
+    value: icd_confidence_model.pt
+seed:
+    value: 42
+val_split:
+    value: 0.2
+weight_decay:
+    value: 1e-05

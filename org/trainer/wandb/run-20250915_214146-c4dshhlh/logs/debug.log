@@ -1,0 +1,23 @@
+2025-09-15 21:41:46,030 INFO    MainThread:282966 [wandb_setup.py:_flush():81] Current SDK version is 0.21.4
+2025-09-15 21:41:46,030 INFO    MainThread:282966 [wandb_setup.py:_flush():81] Configure stats pid to 282966
+2025-09-15 21:41:46,030 INFO    MainThread:282966 [wandb_setup.py:_flush():81] Loading settings from /home/dhanachandra/.config/wandb/settings
+2025-09-15 21:41:46,030 INFO    MainThread:282966 [wandb_setup.py:_flush():81] Loading settings from /media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/wandb/settings
+2025-09-15 21:41:46,030 INFO    MainThread:282966 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2025-09-15 21:41:46,030 INFO    MainThread:282966 [wandb_init.py:setup_run_log_directory():686] Logging user logs to /media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/wandb/run-20250915_214146-c4dshhlh/logs/debug.log
+2025-09-15 21:41:46,031 INFO    MainThread:282966 [wandb_init.py:setup_run_log_directory():687] Logging internal logs to /media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/wandb/run-20250915_214146-c4dshhlh/logs/debug-internal.log
+2025-09-15 21:41:46,031 INFO    MainThread:282966 [wandb_init.py:init():813] calling init triggers
+2025-09-15 21:41:46,031 INFO    MainThread:282966 [wandb_init.py:init():818] wandb.init called with sweep_config: {}
+config: {'embed_model_name': 'sentence-transformers/all-mpnet-base-v2', 'batch_size': 8, 'lr': 0.0002, 'weight_decay': 1e-05, 'epochs': 5, 'dropout': 0.2, 'hidden_dim': 512, 'val_split': 0.2, 'seed': 42, 'save_path': 'icd_confidence_model.pt', 'project': 'icd10-confidence', '_wandb': {}}
+2025-09-15 21:41:46,031 INFO    MainThread:282966 [wandb_init.py:init():854] starting backend
+2025-09-15 21:41:46,240 INFO    MainThread:282966 [wandb_init.py:init():857] sending inform_init request
+2025-09-15 21:41:46,246 INFO    MainThread:282966 [wandb_init.py:init():865] backend started and connected
+2025-09-15 21:41:46,248 INFO    MainThread:282966 [wandb_init.py:init():936] updated telemetry
+2025-09-15 21:41:46,252 INFO    MainThread:282966 [wandb_init.py:init():960] communicating run to backend with 90.0 second timeout
+2025-09-15 21:41:47,684 INFO    MainThread:282966 [wandb_init.py:init():1011] starting run threads in backend
+2025-09-15 21:41:47,815 INFO    MainThread:282966 [wandb_run.py:_console_start():2506] atexit reg
+2025-09-15 21:41:47,816 INFO    MainThread:282966 [wandb_run.py:_redirect():2354] redirect: wrap_raw
+2025-09-15 21:41:47,816 INFO    MainThread:282966 [wandb_run.py:_redirect():2423] Wrapping output streams.
+2025-09-15 21:41:47,816 INFO    MainThread:282966 [wandb_run.py:_redirect():2446] Redirects installed.
+2025-09-15 21:41:47,820 INFO    MainThread:282966 [wandb_init.py:init():1049] run started, returning control to user process
+2025-09-15 21:41:54,395 INFO    wandb-AsyncioManager-main:282966 [service_client.py:_forward_responses():84] Reached EOF.
+2025-09-15 21:41:54,395 INFO    wandb-AsyncioManager-main:282966 [mailbox.py:close():137] Closing mailbox, abandoning 1 handles.

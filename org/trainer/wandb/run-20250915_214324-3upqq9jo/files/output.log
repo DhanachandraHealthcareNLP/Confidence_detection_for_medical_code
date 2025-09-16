@@ -1,0 +1,22 @@
+Loading the embedding model!
+Embedding model dimension: 768
+Input dimension: 4608
+Hidden dim: 512
+Loaded the embedding model!
+Traceback (most recent call last):
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/train.py", line 123, in <module>
+    main(datapoints)
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/trainer/train.py", line 75, in main
+    train_points, val_points = train_test_split(
+                               ^^^^^^^^^^^^^^^^^
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/vir_env/lib/python3.11/site-packages/sklearn/utils/_param_validation.py", line 218, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/vir_env/lib/python3.11/site-packages/sklearn/model_selection/_split.py", line 2940, in train_test_split
+    train, test = next(cv.split(X=arrays[0], y=stratify))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/vir_env/lib/python3.11/site-packages/sklearn/model_selection/_split.py", line 1927, in split
+    for train, test in self._iter_indices(X, y, groups):
+  File "/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/vir_env/lib/python3.11/site-packages/sklearn/model_selection/_split.py", line 2342, in _iter_indices
+    raise ValueError(
+ValueError: The least populated class in y has only 1 member, which is too few. The minimum number of groups for any class cannot be less than 2.
