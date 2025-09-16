@@ -7,6 +7,7 @@ from datetime import datetime
 from tqdm import tqdm
 
 
+
 def read_label_data(csv_file):
     # Nested defaultdict structure
     label_info_dict = defaultdict(lambda: defaultdict(str))
@@ -56,8 +57,12 @@ def read_json_file(file_path: str, label_info_dict: defaultdict):
                 treatment_evidence_list.append(internal_code_trtmnt_text)
 
             label = label_info_dict[(dos, code)]
+            if label == "SUGGESTED_ACCEPTED":
+                label = 1
+            else:
+                label = 0
             if not label:
-                print(f"Label not found for DOS: {dos}, Code: {code} and File path: {file_path}")
+                # print(f"Label not found for DOS: {dos}, Code: {code} and File path: {file_path}")
                 continue
 
             datapoint.append((code, justification_list, monitoring_evidence_list, evaluation_evidence_list,
@@ -73,7 +78,7 @@ if __name__ == "__main__":
     label_info_dict = read_label_data(csv_path)
     datapoint = read_json_file(json_path, label_info_dict["SHP_MA_MRR_2024DOS_900032653_01_1316997356_06112025"])
     print(len(datapoint))
-    print(datapoint)
+    # print(datapoint)
 
     # Pretty-print a sample
     # for doc, dos_dict in label_info_dict.items():

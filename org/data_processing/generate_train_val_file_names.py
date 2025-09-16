@@ -6,8 +6,7 @@ from sklearn.model_selection import train_test_split
 
 test_file_names = [x.strip() for x in open("../data/test_file_name.txt").readlines()]
 
-main_folder_path = ("/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/org/data"
-                    "/Sentara_UI_JSON-20250915T101150Z-1-001/Sentara_UI_JSON")
+main_folder_path = ("/media/dhanachandra/New Volume/HCN_from_2022/2025/Confidence_detection_for_medical_code/Confidence_detection_for_medical_code/org/data/Sentara_UI_JSON-20250915T130259Z-1-001/Sentara_UI_JSON")
 
 folder_name_2_filepath = {}
 for batch_name in os.listdir(main_folder_path):
@@ -15,6 +14,7 @@ for batch_name in os.listdir(main_folder_path):
     # Skip if not a directory
     if not os.path.isdir(batch_dir_path):
         continue
+    # print(batch_name)
     for folder_name in os.listdir(batch_dir_path):
         if folder_name in test_file_names:
             continue

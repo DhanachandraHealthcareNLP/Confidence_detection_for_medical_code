@@ -131,10 +131,13 @@ def load_datapoints_stub():
     ]
 
 
-def get_datapoints(data_file_path, label_info_dict):
+def get_datapoints(data_file_path, label_info_dict, sample_size=100):
     datapoints = []
     with open(data_file_path) as reader:
-        for line in reader:
+        next(reader)
+        for i, line in enumerate(reader):
+            if (i+1) == sample_size:
+                break
             cols = line.split(',')
             cur_datapoint = read_json_file(cols[-1].strip(), label_info_dict[cols[0].strip()])
             datapoints.extend(cur_datapoint)
@@ -143,13 +146,13 @@ def get_datapoints(data_file_path, label_info_dict):
 
 
 if __name__ == "__main__":
-    train_data_file_path = "../data_processing/train_split.csv"
-    val_data_file_path = "../data_processing/val_split.csv"
+    train_data_file_path = "../data/train_split.csv"
+    val_data_file_path = "../data/val_split.csv"
 
     csv_path = "../data/Sentara Model Training .csv"
     label_info_dict = read_label_data(csv_path)
 
     train_data_points = get_datapoints(train_data_file_path, label_info_dict)
     val_data_points = get_datapoints(val_data_file_path, label_info_dict)
-    datapoints = load_datapoints_stub()
-    main(datapoints)
+    # datapoints = load_datapoints_stub()
+    main(tr_datapoints=train_data_points, val_datapoints=val_data_points)
