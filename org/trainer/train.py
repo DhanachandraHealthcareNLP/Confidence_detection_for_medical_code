@@ -79,7 +79,7 @@ def main(tr_datapoints, val_datapoints, collate_fn):
     embed_model = SentenceTransformer(CONFIG["embed_model_name"], device=DEVICE)
     print(f"Embedding model dimension: {embed_model.get_sentence_embedding_dimension()}")
     # self, embed_model, device, hidden_dim = 512, dropout = 0.2
-    model = ICDConfidenceModel(embed_model, DEVICE, hidden_dim=CONFIG["hidden_dim"], dropout=CONFIG["dropout"]).to(
+    model = ICDConfidenceModel(embed_model, DEVICE, hidden_dim=CONFIG["hidden_dim"], dropout=CONFIG["dropout"], config=CONFIG).to(
         DEVICE)
     print("Loaded the embedding model!")
     # Split train/val
@@ -94,8 +94,15 @@ def main(tr_datapoints, val_datapoints, collate_fn):
     train_loader = DataLoader(tr_datapoints, batch_size=CONFIG["batch_size"], shuffle=True, collate_fn=collate_fn)
     val_loader = DataLoader(val_datapoints, batch_size=CONFIG["batch_size"], shuffle=False, collate_fn=collate_fn)
 
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.AdamW(model.parameters(), lr=CONFIG["lr"], weight_decay=CONFIG["weight_decay"])
+    # criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([2.0], device=DEVICE))
+    if CONFIG["use_roberta_for_emb"]:
+        optimizer = torch.optim.AdamW([
+            {"params": model.embed_model.parameters(), "lr": 1e-5},
+            {"params": model.mlp.parameters(), "lr": 1e-3},
+        ])
+    else:
+        optimizer = torch.optim.AdamW(model.parameters(), lr=CONFIG["lr"], weight_decay=CONFIG["weight_decay"])
 
     best_val_f1 = 0
     # for epoch in tqdm(range(1, CONFIG["epochs"] + 1), desc="Training Epoch:"):
@@ -138,7 +145,7 @@ def load_datapoints_stub():
     ]
 
 
-def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=-1):
+def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=100):
     datapoints = []
     with open(data_file_path) as reader:
         next(reader)
