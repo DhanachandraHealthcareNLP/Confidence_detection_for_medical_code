@@ -3,7 +3,7 @@ CONFIG = {
     "batch_size": 8,   # smaller batch since we encode inside forward
     "lr": 2e-4,
     "weight_decay": 1e-5,
-    "epochs": 5,
+    "epochs": 32,
     "dropout": 0.2,
     "hidden_dim": 512,
     "val_split": 0.2,

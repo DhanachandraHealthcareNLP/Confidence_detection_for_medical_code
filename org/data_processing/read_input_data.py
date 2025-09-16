@@ -7,6 +7,21 @@ from datetime import datetime
 from tqdm import tqdm
 
 
+def read_code_description(csv_file):
+    """
+    Reads a CSV file with columns: code, description
+    Returns: dict {code: description}
+    """
+    code_dict = {}
+    with open(csv_file, newline='', encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            code = str(row["code"]).strip()
+            desc = str(row["description"]).strip()
+            if code:  # skip empty codes
+                code_dict[code] = desc
+    return code_dict
+
 
 def read_label_data(csv_file):
     # Nested defaultdict structure
@@ -29,7 +44,7 @@ def read_label_data(csv_file):
     return label_info_dict
 
 
-def read_json_file(file_path: str, label_info_dict: defaultdict):
+def read_json_file(file_path: str, label_info_dict: defaultdict, codedict: {}):
     datapoint = []
     with open(file_path) as f:
         data = json.load(f)
@@ -38,6 +53,9 @@ def read_json_file(file_path: str, label_info_dict: defaultdict):
         dos = dos_data["dos"]
         for icd10cmcode_data in dos_data["icd10cmcodes"]:
             code = icd10cmcode_data["code"]
+            code_desc = code
+            if code in codedict.keys():
+                code_desc = codedict[code]
             justification_list = []
             monitoring_evidence_list = []
             evaluation_evidence_list = []
@@ -64,7 +82,7 @@ def read_json_file(file_path: str, label_info_dict: defaultdict):
                 label = 1
             else:
                 label = 0
-            datapoint.append((code, justification_list, monitoring_evidence_list, evaluation_evidence_list,
+            datapoint.append((code_desc, justification_list, monitoring_evidence_list, evaluation_evidence_list,
                               assessment_evidence_list, treatment_evidence_list, label))
 
     return datapoint
@@ -73,11 +91,15 @@ def read_json_file(file_path: str, label_info_dict: defaultdict):
 # Example usage
 if __name__ == "__main__":
     csv_path = "../data/Sentara Model Training .csv"
-    json_path = "../data/Sentara_UI_JSON-20250915T101150Z-1-001/Sentara_UI_JSON/Batch_1/SHP_MA_MRR_2024DOS_900032653_01_1316997356_06112025/final_merged_result.json"
+    json_path = "../data/Sentara_UI_JSON-20250915T130259Z-1-001/Sentara_UI_JSON/Batch_1/SHP_MA_MRR_2024DOS_900032653_01_1316997356_06112025/final_merged_result.json"
     label_info_dict = read_label_data(csv_path)
-    datapoint = read_json_file(json_path, label_info_dict["SHP_MA_MRR_2024DOS_900032653_01_1316997356_06112025"])
+
+    code_desc_path = "../data/icd_codes.csv"
+    code_dict = read_code_description(code_desc_path)
+
+    datapoint = read_json_file(json_path, label_info_dict["SHP_MA_MRR_2024DOS_900032653_01_1316997356_06112025"], code_dict)
     print(len(datapoint))
-    # print(datapoint)
+    print(datapoint[0])
 
     # Pretty-print a sample
     # for doc, dos_dict in label_info_dict.items():

@@ -1,4 +1,5 @@
 import random
+from collections import Counter
 
 import numpy as np
 import torch
@@ -6,12 +7,15 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+
+from org.trainer.dataset import collate_fn
+
 use_wandb = False
 if use_wandb:
     import wandb
 
 from config import CONFIG
-from org.data_processing.read_input_data import read_json_file, read_label_data
+from org.data_processing.read_input_data import read_json_file, read_label_data, read_code_description
 from org.model.icd10cm_confidence_predictor import ICDConfidenceModel
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,6 +56,7 @@ def eval_epoch(model, loader, criterion, device):
     labels = torch.cat(all_labels).numpy()
     probs = 1 / (1 + np.exp(-logits))
     preds = (probs >= 0.5).astype(int)
+    print(f"Val loss: {total_loss / len(loader.dataset)}")
     return {
         "loss": total_loss / len(loader.dataset),
         "acc": accuracy_score(labels, preds),
@@ -65,7 +70,7 @@ def eval_epoch(model, loader, criterion, device):
 # -------------------------
 # Main
 # -------------------------
-def main(tr_datapoints, val_datapoints):
+def main(tr_datapoints, val_datapoints, collate_fn):
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if use_wandb:
         wandb.login(key="e0b3f587c775832e1793ec717ee83b24a340d7be")
@@ -86,16 +91,18 @@ def main(tr_datapoints, val_datapoints):
     #     stratify=[p[-1] for p in datapoints]
     # )
 
-    train_loader = DataLoader(tr_datapoints, batch_size=CONFIG["batch_size"], shuffle=True)
-    val_loader = DataLoader(val_datapoints, batch_size=CONFIG["batch_size"], shuffle=False)
+    train_loader = DataLoader(tr_datapoints, batch_size=CONFIG["batch_size"], shuffle=True, collate_fn=collate_fn)
+    val_loader = DataLoader(val_datapoints, batch_size=CONFIG["batch_size"], shuffle=False, collate_fn=collate_fn)
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.AdamW(model.parameters(), lr=CONFIG["lr"], weight_decay=CONFIG["weight_decay"])
 
     best_val_f1 = 0
-    for epoch in tqdm(range(1, CONFIG["epochs"] + 1), desc="Training Epoch:"):
+    # for epoch in tqdm(range(1, CONFIG["epochs"] + 1), desc="Training Epoch:"):
+    for epoch in range(1, CONFIG["epochs"] + 1):
         print(f"\nEpoch {epoch}/{CONFIG['epochs']}")
         train_loss = train_epoch(model, train_loader, optimizer, criterion, device=DEVICE)
+        print(f"Training loss: {train_loss}")
         metrics = eval_epoch(model, val_loader, criterion, DEVICE)
         if use_wandb:
             wandb.log({
@@ -103,8 +110,8 @@ def main(tr_datapoints, val_datapoints):
                 "train_loss": train_loss,
                 **{f"val_{k}": v for k, v in metrics.items()}
             })
-        model_saving_path = f"org/checkpoints/icd_confidence_model_{epoch+1}.pt"
-        torch.save(model.state_dict())
+        model_saving_path = f"../checkpoints/icd_confidence_model_{epoch + 1}.pt"
+        torch.save(model.state_dict(), model_saving_path)
         if metrics["f1"] > best_val_f1:
             best_val_f1 = metrics["f1"]
             torch.save(model.state_dict(), CONFIG["save_path"])
@@ -131,18 +138,33 @@ def load_datapoints_stub():
     ]
 
 
-def get_datapoints(data_file_path, label_info_dict, sample_size=100):
+def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=100):
     datapoints = []
     with open(data_file_path) as reader:
         next(reader)
         for i, line in enumerate(reader):
-            if (i+1) == sample_size:
+            if (i + 1) == sample_size:
                 break
             cols = line.split(',')
-            cur_datapoint = read_json_file(cols[-1].strip(), label_info_dict[cols[0].strip()])
+            cur_datapoint = read_json_file(cols[-1].strip(), label_info_dict[cols[0].strip()], code_dict)
             datapoints.extend(cur_datapoint)
 
     return datapoints
+
+
+def calculate_class_distribution(train_data_points, val_data_points):
+    def get_distribution(data_points, name=""):
+        labels = [dp[-1] for dp in data_points]  # last element is label
+        counts = Counter(labels)
+        total = sum(counts.values())
+        distribution = {cls: f"{cnt} ({cnt / total:.2%})" for cls, cnt in counts.items()}
+        # print(f"{name} Distribution: {distribution}")
+        return distribution
+
+    train_dist = get_distribution(train_data_points, "Train")
+    val_dist = get_distribution(val_data_points, "Validation")
+
+    return train_dist, val_dist
 
 
 if __name__ == "__main__":
@@ -152,7 +174,14 @@ if __name__ == "__main__":
     csv_path = "../data/Sentara Model Training .csv"
     label_info_dict = read_label_data(csv_path)
 
-    train_data_points = get_datapoints(train_data_file_path, label_info_dict)
-    val_data_points = get_datapoints(val_data_file_path, label_info_dict)
+    code_desc_path = "../data/icd_codes.csv"
+    code_dict = read_code_description(code_desc_path)
+    train_data_points = get_datapoints(train_data_file_path, label_info_dict, code_dict)
+    val_data_points = get_datapoints(val_data_file_path, label_info_dict, code_dict)
+
+    train_dist, val_dist = calculate_class_distribution(train_data_points, val_data_points)
+    print(f"Train dist: {train_dist}")
+    print(f"Val dist: {val_dist}")
+
     # datapoints = load_datapoints_stub()
-    main(tr_datapoints=train_data_points, val_datapoints=val_data_points)
+    main(tr_datapoints=train_data_points, val_datapoints=val_data_points, collate_fn=collate_fn)
