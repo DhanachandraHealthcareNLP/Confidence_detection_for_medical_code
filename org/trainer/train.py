@@ -7,6 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+from transformers import get_scheduler
 
 from org.trainer.dataset import collate_fn
 
@@ -27,7 +28,7 @@ from sentence_transformers import SentenceTransformer
 print("ALl libraries loaded!")
 
 
-def train_epoch(model, loader, optimizer, criterion, device):
+def train_epoch(model, loader, optimizer, criterion, scheduler, device):
     model.train()
     total_loss = 0
     for batch in tqdm(loader, desc="Train"):
@@ -37,6 +38,7 @@ def train_epoch(model, loader, optimizer, criterion, device):
         loss = criterion(logits, labels)
         loss.backward()
         optimizer.step()
+        scheduler.step()
         total_loss += loss.item() * len(labels)
     return total_loss / len(loader.dataset)
 
@@ -104,11 +106,20 @@ def main(tr_datapoints, val_datapoints, collate_fn):
     else:
         optimizer = torch.optim.AdamW(model.parameters(), lr=CONFIG["lr"], weight_decay=CONFIG["weight_decay"])
 
+    num_training_steps = len(train_loader) * CONFIG["epochs"]
+    num_warmup_steps = int(CONFIG["warmup_ratio"] * num_training_steps)
+    scheduler = get_scheduler(
+        CONFIG["scheduler"],
+        optimizer=optimizer,
+        num_warmup_steps=num_warmup_steps,
+        num_training_steps=num_training_steps,
+    )
+
     best_val_f1 = 0
     # for epoch in tqdm(range(1, CONFIG["epochs"] + 1), desc="Training Epoch:"):
     for epoch in range(1, CONFIG["epochs"] + 1):
         print(f"\nEpoch {epoch}/{CONFIG['epochs']}")
-        train_loss = train_epoch(model, train_loader, optimizer, criterion, device=DEVICE)
+        train_loss = train_epoch(model, train_loader, optimizer, criterion, scheduler, device=DEVICE)
         print(f"Training loss: {train_loss}")
         metrics = eval_epoch(model, val_loader, criterion, DEVICE)
         if use_wandb:
@@ -145,7 +156,7 @@ def load_datapoints_stub():
     ]
 
 
-def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=-1):
+def get_datapoints(data_file_path, label_info_dict, code_dict, sample_size=100):
     datapoints = []
     with open(data_file_path) as reader:
         next(reader)

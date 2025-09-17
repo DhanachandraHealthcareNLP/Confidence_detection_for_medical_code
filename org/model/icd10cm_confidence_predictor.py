@@ -1,31 +1,23 @@
 import torch
-from torch import nn
-
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
-import torch
-import torch.nn.functional as F
 
 
 class AttentionPooling(nn.Module):
-    def __init__(self, embed_dim):
+    def __init__(self, input_dim):
         super().__init__()
-        self.attn = nn.Linear(embed_dim, 1)  # learnable weights → scalar score per embedding
+        self.attn = nn.Linear(input_dim, 1)
 
-    def forward(self, embs):
+    def forward(self, x, mask=None):
         """
-        embs: Tensor of shape (num_texts, embed_dim)
-        Returns: (embed_dim,) pooled representation
+        x: (batch, seq_len, hidden_dim)
+        mask: (batch, seq_len) -> 1 for valid tokens, 0 for padding
         """
-        # Compute attention scores
-        scores = self.attn(embs).squeeze(-1)  # (num_texts,)
-        weights = F.softmax(scores, dim=0)  # normalize to [0,1]
-
-        # Weighted sum
-        pooled = torch.sum(weights.unsqueeze(-1) * embs, dim=0)  # (embed_dim,)
-        return pooled
+        weights = self.attn(x).squeeze(-1)  # (batch, seq_len)
+        if mask is not None:
+            weights = weights.masked_fill(mask == 0, -1e9)
+        weights = torch.softmax(weights, dim=-1)  # (batch, seq_len)
+        return torch.sum(x * weights.unsqueeze(-1), dim=1)  # (batch, hidden_dim)
 
 
 class RobertaEmbedder(nn.Module):
@@ -38,10 +30,6 @@ class RobertaEmbedder(nn.Module):
         self.to(device)
 
     def forward(self, texts, max_length=512):
-        """
-        texts: List[str] (one datapoint with multiple justifications/evidences)
-        returns: (num_texts, embed_dim)
-        """
         if isinstance(texts, str):
             texts = [texts]
 
@@ -54,61 +42,37 @@ class RobertaEmbedder(nn.Module):
         ).to(self.device)
 
         outputs = self.model(**enc)  # (batch, seq_len, hidden_size)
-        last_hidden = outputs.last_hidden_state
+        return outputs.last_hidden_state, enc["attention_mask"]
 
-        # Mean pooling (ignoring padding)
-        mask = enc["attention_mask"].unsqueeze(-1).expand(last_hidden.size()).float()
-        sum_hidden = torch.sum(last_hidden * mask, 1)
-        lengths = torch.clamp(mask.sum(1), min=1e-9)
-        mean_pooled = sum_hidden / lengths  # (batch, hidden_size)
-
-        return mean_pooled
+    def get_sentence_embedding_dimension(self):
+        return self.embed_dim
 
 
 class ICDConfidenceModel(nn.Module):
-    def __init__(self, embed_model, device, hidden_dim=512, dropout=0.2, config=None):
+    def __init__(self, embed_model, device, hidden_dim=512, dropout=0.4, config=None):
         super().__init__()
         self.device = device
         self.embed_model = embed_model
         self.config = config
+
         if self.config["use_roberta_for_emb"]:
             self.embed_model = RobertaEmbedder(self.config["roberta_model_name"], device=device)
-        self.embed_dim = embed_model.get_sentence_embedding_dimension()
+
+        self.embed_dim = self.embed_model.get_sentence_embedding_dimension()
         self.attn_pool = AttentionPooling(self.embed_dim)
+
         input_dim = self.embed_dim * 6  # code + 5 MEAT fields
+
+        # Residual MLP head
         self.mlp = nn.Sequential(
-            nn.LayerNorm(input_dim),
             nn.Linear(input_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim // 2, 1),
         )
-
-    def _encode_field(self, texts_list):
-        batch_embs = []
-        for texts in texts_list:
-            if not texts:
-                emb = torch.zeros(self.embed_dim, device=self.device)
-            else:
-                # Filter out empty strings
-                valid_texts = [t for t in texts if isinstance(t, str) and t.strip()]
-
-                if len(valid_texts) == 0:
-                    emb = torch.zeros(self.embed_dim, device=self.device)
-                else:
-                    embs = self.embed_model.encode(
-                        valid_texts,
-                        convert_to_tensor=True,
-                        device=self.device
-                    )  # (num_texts, embed_dim)
-
-                    embs = embs.clone().detach()
-                    emb = self.attn_pool(embs)  # attention pooling
-            batch_embs.append(emb)
-        return torch.stack(batch_embs, dim=0)  # (batch_size, embed_dim)
+        self.classifier = nn.Linear(hidden_dim, 1)
 
     def _roberta_encode_field(self, texts_list):
         """
@@ -121,21 +85,40 @@ class ICDConfidenceModel(nn.Module):
             if len(valid_texts) == 0:
                 emb = torch.zeros(self.embed_dim, device=self.device)
             else:
-                embs = self.embed_model(valid_texts)  # (num_texts, embed_dim)
-                emb = self.attn_pool(embs)  # pooled (embed_dim,)
+                hidden_states, mask = self.embed_model(valid_texts)  # (num_texts, seq_len, hidden_dim)
+                emb = self.attn_pool(hidden_states, mask)  # (num_texts, hidden_dim)
+                emb = emb.mean(dim=0)  # aggregate across multiple texts
+            batch_embs.append(emb)
+        return torch.stack(batch_embs, dim=0)
+
+    def _encode_field(self, texts_list):
+        """
+        For SentenceTransformer (non-RoBERTa) case
+        """
+        batch_embs = []
+        for texts in texts_list:
+            valid_texts = [t for t in texts if isinstance(t, str) and t.strip()]
+            if len(valid_texts) == 0:
+                emb = torch.zeros(self.embed_dim, device=self.device)
+            else:
+                embs = self.embed_model.encode(
+                    valid_texts,
+                    convert_to_tensor=True,
+                    device=self.device
+                )  # (num_texts, embed_dim)
+                emb = self.attn_pool(embs.unsqueeze(0)).squeeze(0)  # add batch dim
             batch_embs.append(emb)
         return torch.stack(batch_embs, dim=0)
 
     def forward(self, batch):
-        # batch["code"] is already List[str]
-
         if self.config["use_roberta_for_emb"]:
             just_emb = self._roberta_encode_field(batch["justification"])
             mon_emb = self._roberta_encode_field(batch["monitoring"])
             eval_emb = self._roberta_encode_field(batch["evaluation"])
             assm_emb = self._roberta_encode_field(batch["assessment"])
             trt_emb = self._roberta_encode_field(batch["treatment"])
-            code_emb = self.embed_model(batch["code"])
+            code_hidden, code_mask = self.embed_model(batch["code"])
+            code_emb = self.attn_pool(code_hidden, code_mask)
         else:
             code_emb = self.embed_model.encode(batch["code"], convert_to_tensor=True, device=self.device)
             just_emb = self._encode_field(batch["justification"])
@@ -144,6 +127,10 @@ class ICDConfidenceModel(nn.Module):
             assm_emb = self._encode_field(batch["assessment"])
             trt_emb = self._encode_field(batch["treatment"])
 
-        # Concatenate all fields
+        # Concatenate
         x = torch.cat([code_emb, just_emb, mon_emb, eval_emb, assm_emb, trt_emb], dim=-1)
-        return self.mlp(x)
+
+        # Residual MLP
+        features = self.mlp(x)
+        logits = self.classifier(features + x[:, :features.size(1)])  # add skip connection from part of input
+        return logits

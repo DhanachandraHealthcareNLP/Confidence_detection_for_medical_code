@@ -11,5 +11,7 @@ CONFIG = {
     "save_path": "icd_confidence_model.pt",
     "project": "icd10-confidence",
     "use_roberta_for_emb": True,
-    "roberta_model_name": "pminervini/RoBERTa-base-PM-M3-Voc-hf"
+    "roberta_model_name": "pminervini/RoBERTa-base-PM-M3-Voc-hf",
+    "scheduler": "cosine",
+    "warmup_ratio": 0.1,
 }
